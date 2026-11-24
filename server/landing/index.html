@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="iMoon — period tracker. Local-first, your data stays on your device.">
+  <title>iMoon — Period Tracker</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0D0F1A;
+      color: #E8EAF0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+    }
+
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .moon-icon {
+      font-size: 80px;
+      line-height: 1;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 24px rgba(244, 167, 185, 0.4));
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: #F4A7B9;
+      letter-spacing: -1px;
+      margin-bottom: 10px;
+    }
+
+    .tagline {
+      color: #9E9EB8;
+      font-size: 1.05rem;
+      font-weight: 400;
+    }
+
+    .badges {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .badge {
+      background: #1C1E2E;
+      color: #9E9EB8;
+      border: 1px solid #2A2C3C;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 340px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 17px 24px;
+      border-radius: 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      border: none;
+      letter-spacing: 0.1px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-android {
+      background: #3DDC84;
+      color: #0D2010;
+      box-shadow: 0 4px 20px rgba(61, 220, 132, 0.25);
+    }
+
+    .btn-android:hover {
+      box-shadow: 0 6px 28px rgba(61, 220, 132, 0.35);
+    }
+
+    .btn-ios {
+      background: #1C1E2E;
+      color: #E8EAF0;
+      border: 1px solid #3A3C52;
+    }
+
+    .btn-web {
+      background: transparent;
+      color: #6E7090;
+      border: 1px solid #1C1E2E;
+      font-size: 0.9rem;
+      padding: 13px 24px;
+    }
+
+    .divider {
+      width: 100%;
+      max-width: 340px;
+      border: none;
+      border-top: 1px solid #1A1C2A;
+      margin: 4px 0;
+    }
+
+    .footer {
+      margin-top: 56px;
+      color: #3A3C52;
+      font-size: 0.78rem;
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    /* iOS modal */
+    .modal-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 100;
+      align-items: flex-end;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-bg.open { display: flex; }
+
+    .modal {
+      background: #161828;
+      border: 1px solid #2A2C3C;
+      border-radius: 24px 24px 0 0;
+      padding: 28px 24px 36px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: #2A2C3C;
+      border-radius: 2px;
+      margin: 0 auto 24px;
+    }
+
+    .modal h2 {
+      color: #F4A7B9;
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+    }
+
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    .step-num {
+      background: #F4A7B9;
+      color: #0D0F1A;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-text {
+      color: #B0B2CC;
+      font-size: 0.95rem;
+      line-height: 1.55;
+    }
+
+    .step-text strong { color: #E8EAF0; }
+
+    .modal-url {
+      background: #0D0F1A;
+      border: 1px solid #2A2C3C;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #F4A7B9;
+      margin: 12px 0 20px;
+      text-align: center;
+      word-break: break-all;
+    }
+
+    .modal-close {
+      background: #2A2C3C;
+      color: #E8EAF0;
+      border: none;
+      padding: 15px;
+      border-radius: 12px;
+      width: 100%;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .modal-close:hover { background: #343650; }
+
+    @media (prefers-color-scheme: light) {
+      /* Keep dark regardless — this is the brand */
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="moon-icon">🌙</div>
+    <h1>iMoon</h1>
+    <p class="tagline">Your cycle, in sync with the moon.</p>
+    <div class="badges">
+      <span class="badge">Local-first</span>
+      <span class="badge">No account needed</span>
+      <span class="badge">Your data stays on-device</span>
+    </div>
+  </div>
+
+  <div class="buttons">
+
+    <a class="btn btn-android" href="/download/imoon.apk" id="android-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C13.85 1.23 12.95 1 12 1c-.96 0-1.86.23-2.66.63L7.85.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31C6.97 3.26 6 5.01 6 7h12c0-1.99-.97-3.75-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/>
+      </svg>
+      Download for Android
+    </a>
+
+    <button class="btn btn-ios" onclick="document.getElementById('ios-modal').classList.add('open')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+      </svg>
+      Add to iPhone (PWA)
+    </button>
+
+    <hr class="divider">
+
+    <a class="btn btn-web" href="/app/">
+      Try in browser
+    </a>
+
+  </div>
+
+  <div class="footer">
+    Local-first &nbsp;&middot;&nbsp; Open source &nbsp;&middot;&nbsp; Flutter + Drift<br>
+    <span style="color:#2A2C3C">plexus.lv projects</span>
+  </div>
+
+  <!-- iOS install instructions modal -->
+  <div class="modal-bg" id="ios-modal"
+       onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h2>Add iMoon to iPhone</h2>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">Open in <strong>Safari</strong> (must be Safari, not Chrome or Firefox)</div>
+      </div>
+      <div class="modal-url">imoon.plexus.lv/app/</div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Tap the <strong>Share button</strong> <span style="font-size:1.1em">&#11014;&#65038;</span> at the bottom of the screen</div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Scroll down and tap <strong>"Add to Home Screen"</strong></div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">Tap <strong>"Add"</strong> in the top right — iMoon will appear on your home screen like a native app</div>
+      </div>
+
+      <button class="modal-close" onclick="document.getElementById('ios-modal').classList.remove('open')">
+        Got it
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Check if APK exists; if not, dim the button gracefully
+    fetch('/download/imoon.apk', { method: 'HEAD' }).then(r => {
+      if (!r.ok) {
+        var btn = document.getElementById('android-btn');
+        btn.style.opacity = '0.45';
+        btn.style.pointerEvents = 'none';
+        btn.title = 'Android APK coming soon';
+        btn.innerHTML = btn.innerHTML.replace('Download for Android', 'Android — coming soon');
+      }
+    }).catch(() => {});
+  </script>
+
+</body>
+</html>
