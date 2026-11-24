@@ -21,7 +21,9 @@ LOCAL  = r'E:\#CODE_RED\imoon'
 
 DEPLOY_APK = '--apk' in sys.argv
 
-WEB_LOCAL  = os.path.join(LOCAL, 'build', 'web')
+# Build happens in E:\imoon (no # in path — Dart URI requirement)
+BUILD_DIR  = r'E:\imoon'
+WEB_LOCAL  = os.path.join(BUILD_DIR, 'build', 'web')
 WEB_REMOTE = '/var/www/imoon/app'
 LANDING    = os.path.join(LOCAL, 'server', 'landing', 'index.html')
 

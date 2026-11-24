@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:drift/drift.dart' show Value;
+import 'package:flutter/foundation.dart' show ChangeNotifier;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:imoon/data/database.dart';
 import 'package:imoon/logic/cycle_calculator.dart';

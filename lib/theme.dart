@@ -120,7 +120,7 @@ ThemeData buildTheme() {
         return GoogleFonts.outfit(color: IMoonColors.textMuted, fontSize: 11);
       }),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color:        IMoonColors.surface,
       elevation:    0,
       shape: RoundedRectangleBorder(
