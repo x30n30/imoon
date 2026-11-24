@@ -1,49 +1,58 @@
-import paramiko, os, stat
+"""
+iMoon deploy script.
+
+Usage:
+  python deploy_now.py          -- deploy pre-built web app + landing page
+  python deploy_now.py --apk    -- also upload build/app/outputs/flutter-apk/app-release.apk
+
+Before running, build locally:
+  flutter pub get
+  dart run build_runner build --delete-conflicting-outputs
+  flutter build web --release --base-href /app/
+  flutter build apk --release  (optional, for Android)
+"""
+
+import paramiko, os, sys
 
 HOST   = '80.208.230.36'
 USER   = 'root'
 PW     = 'pOfPF543Qq2o'
 LOCAL  = r'E:\#CODE_RED\imoon'
-REMOTE = '/opt/imoon'
 
-SKIP_DIRS  = {'.dart_tool', '.idea', '.vscode', 'build', '.git',
-              '__pycache__', 'android', 'ios', 'macos', 'windows', 'linux'}
-SKIP_EXTS  = {'.g.dart', '.freezed.dart', '.iml'}
-SKIP_FILES = {'.flutter-plugins', '.flutter-plugins-dependencies', '.packages',
-              'pubspec.lock', 'deploy_now.py'}
+DEPLOY_APK = '--apk' in sys.argv
 
-def should_skip(rel_path):
-    parts = rel_path.replace('\\', '/').split('/')
-    if any(p in SKIP_DIRS for p in parts[:-1]):
-        return True
-    name = parts[-1]
-    if name in SKIP_FILES:
-        return True
-    for ext in SKIP_EXTS:
-        if name.endswith(ext):
-            return True
-    return False
+WEB_LOCAL  = os.path.join(LOCAL, 'build', 'web')
+WEB_REMOTE = '/var/www/imoon/app'
+LANDING    = os.path.join(LOCAL, 'server', 'landing', 'index.html')
 
-def collect_files():
-    files = []
-    for root, dirs, fnames in os.walk(LOCAL):
-        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
-        for fname in fnames:
-            full = os.path.join(root, fname)
-            rel  = os.path.relpath(full, LOCAL)
-            if not should_skip(rel):
-                files.append((full, rel.replace('\\', '/')))
-    return files
-
-def ensure_remote_dir(sftp, remote_path):
-    parts = remote_path.strip('/').split('/')
-    path  = ''
+def ensure_remote_dir(sftp, path):
+    parts = path.strip('/').split('/')
+    p = ''
     for part in parts:
-        path += '/' + part
+        p += '/' + part
         try:
-            sftp.stat(path)
+            sftp.stat(p)
         except FileNotFoundError:
-            sftp.mkdir(path)
+            sftp.mkdir(p)
+
+def upload_dir(sftp, local_dir, remote_dir):
+    ensure_remote_dir(sftp, remote_dir)
+    count = 0
+    for root, dirs, files in os.walk(local_dir):
+        rel_root = os.path.relpath(root, local_dir).replace('\\', '/')
+        rdir = remote_dir if rel_root == '.' else remote_dir + '/' + rel_root
+        ensure_remote_dir(sftp, rdir)
+        for fname in files:
+            lpath = os.path.join(root, fname)
+            rpath = rdir + '/' + fname
+            sftp.put(lpath, rpath)
+            count += 1
+    return count
+
+if not os.path.isdir(WEB_LOCAL):
+    print('ERROR: build/web/ not found.')
+    print('Run: flutter build web --release --base-href /app/')
+    sys.exit(1)
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -51,21 +60,27 @@ print(f'Connecting to {HOST}...')
 ssh.connect(HOST, username=USER, password=PW, timeout=15)
 sftp = ssh.open_sftp()
 
-files = collect_files()
-print(f'Uploading {len(files)} files...')
-for local_path, rel in files:
-    remote_path = REMOTE + '/' + rel
-    remote_dir  = remote_path.rsplit('/', 1)[0]
-    ensure_remote_dir(sftp, remote_dir)
-    sftp.put(local_path, remote_path)
-    print(f'  {rel}')
+# Clear old web build
+ssh.exec_command(f'rm -rf {WEB_REMOTE}/* 2>/dev/null; mkdir -p {WEB_REMOTE}')
+
+print('Uploading Flutter web build...')
+n = upload_dir(sftp, WEB_LOCAL, WEB_REMOTE)
+print(f'  {n} files uploaded to {WEB_REMOTE}')
+
+print('Uploading landing page...')
+sftp.put(LANDING, '/var/www/imoon/index.html')
+print('  landing page updated')
+
+if DEPLOY_APK:
+    apk_local  = os.path.join(LOCAL, 'build', 'app', 'outputs', 'flutter-apk', 'app-release.apk')
+    apk_remote = '/var/www/imoon/download/imoon.apk'
+    if os.path.exists(apk_local):
+        ensure_remote_dir(sftp, '/var/www/imoon/download')
+        sftp.put(apk_local, apk_remote)
+        print('  APK uploaded')
+    else:
+        print('  APK not found (run: flutter build apk --release)')
 
 sftp.close()
-
-print('\nRunning build on VPS...')
-_, out, err = ssh.exec_command(f'bash {REMOTE}/server/build.sh 2>&1')
-for line in out:
-    print(line, end='')
-
 ssh.close()
 print('\nDone — https://imoon.plexus.lv')

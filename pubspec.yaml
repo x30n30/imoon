@@ -13,7 +13,7 @@ dependencies:
 
   # Database (local SQLite)
   drift: ^2.18.0
-  drift_flutter: ^0.1.1
+  drift_flutter: ^0.2.8
   sqlite3_flutter_libs: ^0.5.24
 
   # State management
@@ -46,7 +46,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  fonts:
-    - family: IMoon
-      fonts:
-        - asset: assets/fonts/placeholder.ttf
